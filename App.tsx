@@ -1,120 +1,157 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * Generated with the TypeScript template
- * https://github.com/react-native-community/react-native-template-typescript
- *
- * @format
- */
-
-import React, {type PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
-
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-const Section: React.FC<
-  PropsWithChildren<{
-    title: string;
-  }>
-> = ({children, title}) => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
-
-const App = () => {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
+import {useCallback, useEffect, memo, useState} from 'react';
+import {ScrollView, StatusBar, StyleSheet, RefreshControl} from 'react-native';
+import FlashMessage, {showMessage} from 'react-native-flash-message';
+import {LoadingView} from 'src/components';
+import {api} from 'src/services';
+import {colors} from 'src/theme';
+import {TCoinResponse} from 'src/types';
+import {formatNumberToMoney} from 'src/utils';
+import styled from 'styled-components/native';
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  contentContainer: {
+    flexGrow: 1,
   },
 });
+const Wrapper = styled.View`
+  flex: 1;
+  background-color: ${colors.main};
+`;
 
-export default App;
+const Title = styled.Text`
+  color: ${colors.white};
+  font-size: 25px;
+`;
+
+const SubTitle = styled.Text<{negative: boolean}>`
+  color: ${(props: {negative: boolean}) =>
+    props.negative ? colors.error : colors.success};
+  font-size: 20px;
+`;
+
+const CenteredWrapper = styled.View`
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+`;
+
+const LoadingContainer = styled.View`
+  width: 100px;
+  height: 200px;
+  justify-content: center;
+  align-items: center;
+`;
+
+const SafeWrapper = styled.SafeAreaView`
+  flex: 1;
+`;
+
+function App() {
+  const [data, setData] = useState<TCoinResponse>();
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  const getData = useCallback(async () => {
+    setRefreshing(true);
+    const res: any = await api('get', 'getCurrencyInfo', {
+      id: '1',
+    });
+
+    setTimeout(() => {
+      setRefreshing(false);
+      setData(res.data[1]);
+      showMessage({
+        duration: 2500,
+        message: 'Éxito',
+        description: 'La información se ha actualizado',
+        type: 'success',
+        icon: 'success',
+      });
+    }, 1500);
+  }, []);
+
+  useEffect(() => {
+    getData();
+  }, [getData]);
+
+  return (
+    <Wrapper>
+      <StatusBar barStyle={'light-content'} />
+      <SafeWrapper>
+        <ScrollView
+          refreshControl={
+            <RefreshControl
+              tintColor={colors.white}
+              refreshing={refreshing}
+              onRefresh={getData}
+            />
+          }>
+          <CenteredWrapper style={styles.contentContainer}>
+            <Title>Welcome to </Title>
+            <Title>Bitcoin demo</Title>
+          </CenteredWrapper>
+          {data && (
+            <>
+              <CenteredWrapper>
+                <LoadingContainer>
+                  <LoadingView />
+                </LoadingContainer>
+              </CenteredWrapper>
+              <CenteredWrapper>
+                <Title>Current price</Title>
+                <SubTitle negative={data.quote.USD.percent_change_1h < 0}>
+                  {formatNumberToMoney(data.quote.USD.price)}
+                </SubTitle>
+              </CenteredWrapper>
+              <CenteredWrapper>
+                <Title>Percent change in 1h</Title>
+                <SubTitle negative={data.quote.USD.percent_change_1h < 0}>
+                  {data.quote.USD.percent_change_1h}%
+                </SubTitle>
+              </CenteredWrapper>
+              <CenteredWrapper>
+                <Title>Percent change in 1h</Title>
+                <SubTitle negative={data.quote.USD.percent_change_1h < 0}>
+                  {data.quote.USD.percent_change_1h}%
+                </SubTitle>
+              </CenteredWrapper>
+              <CenteredWrapper>
+                <Title>Percent change in last day</Title>
+                <SubTitle negative={data.quote.USD.percent_change_24h < 0}>
+                  {data.quote.USD.percent_change_24h}%
+                </SubTitle>
+              </CenteredWrapper>
+              <CenteredWrapper>
+                <Title>Percent change in last week</Title>
+                <SubTitle negative={data.quote.USD.percent_change_7d < 0}>
+                  {data.quote.USD.percent_change_7d}%
+                </SubTitle>
+              </CenteredWrapper>
+              <CenteredWrapper>
+                <Title>Percent change in last month</Title>
+                <SubTitle negative={data.quote.USD.percent_change_30d < 0}>
+                  {data.quote.USD.percent_change_30d}%
+                </SubTitle>
+              </CenteredWrapper>
+            </>
+          )}
+          {!data && (
+            <>
+              <CenteredWrapper>
+                <LoadingContainer>
+                  <LoadingView />
+                </LoadingContainer>
+              </CenteredWrapper>
+              <CenteredWrapper>
+                <Title>Loading info...</Title>
+              </CenteredWrapper>
+            </>
+          )}
+        </ScrollView>
+      </SafeWrapper>
+      <FlashMessage />
+    </Wrapper>
+  );
+}
+
+export default memo(App);

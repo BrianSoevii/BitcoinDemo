@@ -3,8 +3,13 @@
   "extends": "@tsconfig/react-native/tsconfig.json",     /* Recommended React Native TSConfig base */
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
+    "jsx": "preserve",
 
     /* Completeness */
-    "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
+    "skipLibCheck": true,
+    "paths": {
+      "src/*": ["src/*"]
+    },
+    "types": ["jest", "node", "styled-components-react-native"]
   }
 }

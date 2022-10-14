@@ -2,10 +2,9 @@ import axios from 'axios';
 import Config from 'react-native-config';
 
 const instance = axios.create({
-  baseURL: Config.API_URL,
+  baseURL: 'https://pro-api.coinmarketcap.com/',
   headers: {
-    'Content-Type': 'application/json',
-    'X-CMC_PRO_API_KEY': Config.COIN_API_KEY,
+    'X-CMC_PRO_API_KEY': Config.COIN_API_KEY!,
   },
 });
 
